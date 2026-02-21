@@ -3,7 +3,7 @@
 An easy to use symmetric encryption program for Android and PC.
 
 It uses [ISO/IEC 7816-4 padding](https://handwiki.org/wiki/Padding_(cryptography)#ISO/IEC_7816-4) with a muliple of 1KB blocks prior
-AES-256 GCM encryption, with an Argon2id protected password, which
+AES-256-GCM encryption, with an Argon2id protected password, which
 must be at least 12 characters Long.
 
 
@@ -15,7 +15,7 @@ MicroCrypt on PC:
 
 ![nikemailer](img/2.png)  
 
-If you like ;icroCrypt, as much as I do,  consider a small    
+If you like MicroCrypt, as much as I do,  consider a small    
 donation in crypto currencies or buy me a coffee.      
 ```  
 BTC: bc1qkluy2kj8ay64jjsk0wrfynp8gvjwet9926rdel  
