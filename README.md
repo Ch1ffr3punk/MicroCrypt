@@ -11,10 +11,6 @@ MicroCrypt on Android:
 
 ![MicroCrypt](img/1.png)  
 
-MicroCrypt on PC:  
-
-![nikemailer](img/2.png)  
-
 If you like MicroCrypt, as much as I do,  consider a small    
 donation in crypto currencies or buy me a coffee.      
 ```  
