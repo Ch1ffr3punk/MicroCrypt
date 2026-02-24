@@ -6,8 +6,6 @@ It uses [ISO/IEC 7816-4 padding](https://handwiki.org/wiki/Padding_(cryptography
 AES-256-GCM encryption, with an Argon2id protected password, which
 must be at least 12 characters long.
 
-MicroCypt on Android:
-
 ![MicroCrypt](img/1.png)  
 
 If you like MicroCrypt, as much as I do,  consider a small    
