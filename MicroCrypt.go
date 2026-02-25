@@ -459,32 +459,39 @@ func (e *SecureEditor) toggleTheme() {
 	e.window.Content().Refresh()
 }
 
-// askPassword displays a modal dialog to securely collect a passphrase
 func (e *SecureEditor) askPassword(callback func(*memguard.LockedBuffer, error)) {
-	passEntry := widget.NewPasswordEntry()
-	passEntry.SetPlaceHolder("")
-	formItems := []*widget.FormItem{widget.NewFormItem("Password", passEntry)}
+    passEntry := widget.NewPasswordEntry()
+    passEntry.SetPlaceHolder("")
+    formItems := []*widget.FormItem{widget.NewFormItem("Password", passEntry)}
 
-	dlg := dialog.NewForm("", "OK", "Cancel", formItems, func(confirmed bool) {
-		if !confirmed {
-			callback(nil, errors.New("cancelled"))
-			return
-		}
-		// Enforce minimum password strength
-		if len(passEntry.Text) < 12 {
-			dialog.ShowInformation("", "Password too short\nMinimum 12 characters required", e.window)
-			return
-		}
-		// Store password in protected memory
-		result := memguard.NewBufferFromBytes([]byte(passEntry.Text))
-		passEntry.Text = ""
-		passEntry.Refresh()
-		callback(result, nil)
-	}, e.window)
+    dlg := dialog.NewForm("", "OK", "Cancel", formItems, func(confirmed bool) {
+        if !confirmed {
+            callback(nil, errors.New("cancelled"))
+            return
+        }
+        if len(passEntry.Text) < 12 {
+            dialog.ShowInformation("", "Password too short\nMinimum 12 characters required", e.window)
+            return
+        }
+        result := memguard.NewBufferFromBytes([]byte(passEntry.Text))
+        passEntry.Text = ""
+        passEntry.Refresh()
+        callback(result, nil)
+    }, e.window)
 
-	dlg.Resize(fyne.NewSize(350, 180))
-	dlg.Show()
-	e.window.Canvas().Focus(passEntry)
+    if fyne.CurrentDevice().IsMobile() {
+        dlg.Resize(fyne.NewSize(320, 140))
+    } else {
+        dlg.Resize(fyne.NewSize(350, 180))
+    }
+
+    dlg.Show()
+    
+    time.AfterFunc(50*time.Millisecond, func() {
+        fyne.Do(func() {
+            e.window.Canvas().Focus(passEntry)
+        })
+    })
 }
 
 // formatBase64Short formats base64 output with line breaks for readability
