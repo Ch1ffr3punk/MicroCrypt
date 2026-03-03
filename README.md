@@ -44,8 +44,8 @@ MicroCrypt uses the following components:
    - Parallelism: 4 threads    
 
 3. **ISO/IEC 7816-4 Padding**
-   Data is padded to 1 KB boundaries before encryption. This helps    
-   reduce leakage about the original file size.    
+   Data is padded to 1 KB boundaries before encryption.
+   This helps reduce leakage about the original file size.      
 
 ## Encrypted Output Format
 
