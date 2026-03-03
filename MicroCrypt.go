@@ -369,10 +369,10 @@ func (e *SecureEditor) setupMobileUI() fyne.CanvasObject {
     pasteBtn := widget.NewButton("Paste", e.pasteFromClipboard)
     pasteBtn.Importance = widget.MediumImportance
 
-    // Theme Switch Button with emoji (Moon for Dark theme)
-    themeSwitch := widget.NewButton("🌙", e.toggleTheme)
+    // Theme Switch Button with emoji
+    themeSwitch := widget.NewButton("☀️", e.toggleTheme)
     themeSwitch.Importance = widget.LowImportance
-    e.themeSwitch = themeSwitch  // ← Referenz speichern
+    e.themeSwitch = themeSwitch
 
     topBar := container.NewHBox(layout.NewSpacer(), themeSwitch)
 
@@ -468,16 +468,14 @@ func (e *SecureEditor) toggleTheme() {
     if e.isDarkTheme {
         e.app.Settings().SetTheme(theme.LightTheme())
         e.isDarkTheme = false
-        // Switch to Light → Show Sun emoji
         if e.themeSwitch != nil {
-            e.themeSwitch.SetText("☀️")
+            e.themeSwitch.SetText("🌙")
         }
     } else {
         e.app.Settings().SetTheme(theme.DarkTheme())
         e.isDarkTheme = true
-        // Switch to Dark → Show Moon emoji
         if e.themeSwitch != nil {
-            e.themeSwitch.SetText("🌙")
+            e.themeSwitch.SetText("☀️")
         }
     }
     
