@@ -63,7 +63,7 @@ every 24 characters for easier handling.
 ## Use Cases
 
  MicroCrypt is suitable for:    
- - Encrypting personal files with a simple GUI   
+ - Encrypting private messages or notes with a simple GUI   
  - Cross-platform workflows where the same tool is needed on desktop and     
    Android or iOS   
  - Users who want strong encryption without complex configuration    
