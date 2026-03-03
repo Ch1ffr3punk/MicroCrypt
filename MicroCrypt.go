@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -36,7 +35,7 @@ const (
 	// Security and rate limiting
 	maxDecryptAttempts = 5                // Maximum failed decryption attempts
 	rateLimitDuration  = time.Minute      // Time window for rate limiting
-	autoClearDuration  = 60 * time.Second // Auto-clear timeout for inactivity
+	autoClearDuration  = 5 * time.Minute  // Auto-clear timeout for inactivity
 )
 
 // SecureEntry wraps a Fyne entry widget and stores its content in memguard-protected memory
@@ -87,8 +86,10 @@ func (se *SecureEntry) SetText(text string) {
 	}
 }
 
-// GetText returns the current content as a plain string (use with caution)
-// Caller is responsible for handling the returned string securely
+// GetText returns the current content as a plain string.
+// SECURITY WARNING: The returned string resides in standard heap memory
+// and is NOT protected by memguard. It may persist in memory until GC runs.
+// Use only for short-lived operations (e.g., clipboard copy) and avoid storing the result.
 func (se *SecureEntry) GetText() string {
 	se.mu.Lock()
 	defer se.mu.Unlock()
@@ -99,7 +100,20 @@ func (se *SecureEntry) GetText() string {
 	return string(se.buffer.Bytes())
 }
 
-// GetBuffer returns direct access to the protected buffer for secure operations
+// WithBuffer executes the provided function with direct access to the protected buffer.
+// This avoids creating unprotected string copies and is the preferred way to process sensitive data.
+func (se *SecureEntry) WithBuffer(fn func(*memguard.LockedBuffer) error) error {
+	se.mu.Lock()
+	defer se.mu.Unlock()
+
+	if se.buffer == nil {
+		return errors.New("buffer is nil")
+	}
+	return fn(se.buffer)
+}
+
+// GetBuffer returns direct access to the protected buffer for secure operations.
+// Use WithBuffer() when possible to avoid accidental exposure.
 func (se *SecureEntry) GetBuffer() *memguard.LockedBuffer {
 	se.mu.Lock()
 	defer se.mu.Unlock()
@@ -354,8 +368,7 @@ func (e *SecureEditor) setupMobileUI() fyne.CanvasObject {
 	pasteBtn := widget.NewButton("Paste", e.pasteFromClipboard)
 	pasteBtn.Importance = widget.MediumImportance
 
-	// Theme toggle button
-	themeSwitch := widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), e.toggleTheme)
+	themeSwitch := widget.NewButton("◩", e.toggleTheme)
 	themeSwitch.Importance = widget.LowImportance
 
 	topBar := container.NewHBox(layout.NewSpacer(), themeSwitch)
@@ -394,8 +407,8 @@ func (e *SecureEditor) setupMobileUI() fyne.CanvasObject {
 
 // isVerySmallScreen checks if the window width is below the mobile threshold
 func (e *SecureEditor) isVerySmallScreen() bool {
-	size := e.window.Canvas().Size()
-	return size.Width > 0 && size.Width < 360
+	width := e.window.Canvas().Size().Width
+	return width > 0 && width < 360
 }
 
 // selectAll triggers text selection in the secure text area
@@ -405,7 +418,7 @@ func (e *SecureEditor) selectAll() {
 	}
 }
 
-// copyToClipboard copies the current text to the system clipboard with auto-clear
+// copyToClipboard copies the current text to the system clipboard with security warning and auto-clear
 func (e *SecureEditor) copyToClipboard() {
 	e.mu.RLock()
 	text := e.textArea.GetText()
@@ -422,7 +435,7 @@ func (e *SecureEditor) copyToClipboard() {
 	// Auto-clear clipboard after delay for security
 	go func() {
 		time.Sleep(15 * time.Second)
-		if e.window != nil {
+		if e.window != nil && e.window.Clipboard() != nil {
 			e.window.Clipboard().SetContent("")
 		}
 	}()
@@ -459,39 +472,41 @@ func (e *SecureEditor) toggleTheme() {
 	e.window.Content().Refresh()
 }
 
+// askPassword prompts the user for a password with minimum length validation
 func (e *SecureEditor) askPassword(callback func(*memguard.LockedBuffer, error)) {
-    passEntry := widget.NewPasswordEntry()
-    passEntry.SetPlaceHolder("")
-    formItems := []*widget.FormItem{widget.NewFormItem("Password", passEntry)}
+	passEntry := widget.NewPasswordEntry()
+	passEntry.SetPlaceHolder("")
+	formItems := []*widget.FormItem{widget.NewFormItem("Password", passEntry)}
 
-    dlg := dialog.NewForm("", "OK", "Cancel", formItems, func(confirmed bool) {
-        if !confirmed {
-            callback(nil, errors.New("cancelled"))
-            return
-        }
-        if len(passEntry.Text) < 12 {
-            dialog.ShowInformation("", "Password too short\nMinimum 12 characters required", e.window)
-            return
-        }
-        result := memguard.NewBufferFromBytes([]byte(passEntry.Text))
-        passEntry.Text = ""
-        passEntry.Refresh()
-        callback(result, nil)
-    }, e.window)
+	dlg := dialog.NewForm("", "OK", "Cancel", formItems, func(confirmed bool) {
+		if !confirmed {
+			callback(nil, errors.New("cancelled"))
+			return
+		}
+		if len(passEntry.Text) < 15 {
+			dialog.ShowInformation("", "Password too short\nMinimum 15 characters required", e.window)
+			return
+		}
+		result := memguard.NewBufferFromBytes([]byte(passEntry.Text))
+		passEntry.Text = ""
+		passEntry.Refresh()
+		callback(result, nil)
+	}, e.window)
 
-    if fyne.CurrentDevice().IsMobile() {
-        dlg.Resize(fyne.NewSize(320, 140))
-    } else {
-        dlg.Resize(fyne.NewSize(350, 180))
-    }
+	if fyne.CurrentDevice().IsMobile() {
+		dlg.Resize(fyne.NewSize(320, 100))
+	} else {
+		dlg.Resize(fyne.NewSize(350, 180))
+	}
 
-    dlg.Show()
-    
-    time.AfterFunc(50*time.Millisecond, func() {
-        fyne.Do(func() {
-            e.window.Canvas().Focus(passEntry)
-        })
-    })
+	dlg.Show()
+
+	// Focus password field after dialog renders
+	time.AfterFunc(50*time.Millisecond, func() {
+		fyne.Do(func() {
+			e.window.Canvas().Focus(passEntry)
+		})
+	})
 }
 
 // formatBase64Short formats base64 output with line breaks for readability
@@ -522,7 +537,11 @@ func decodeFormattedBase64(data string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(cleanData)
 }
 
-// cleanup securely destroys all sensitive data in memory
+// cleanup securely destroys all sensitive data in memory.
+// Note: Go's GC may retain copies of sensitive data in heap until collection.
+// memguard protects our LockedBuffers; for strings/[]byte we rely on zeroing
+// and hope GC collects them promptly. Perfect memory hygiene is not possible
+// in pure Go without unsafe operations.
 func (e *SecureEditor) cleanup() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -538,10 +557,11 @@ func (e *SecureEditor) cleanup() {
 	if e.textArea != nil {
 		e.textArea.Clear()
 	}
-	if e.window != nil {
+	if e.window != nil && e.window.Clipboard() != nil {
 		e.window.Clipboard().SetContent("")
 	}
-	runtime.GC()
+	// runtime.GC() intentionally omitted: not guaranteed to run immediately,
+	// and memguard already handles secure memory regions.
 }
 
 // clearEditor securely wipes the text area and associated buffers
@@ -591,7 +611,7 @@ func (e *SecureEditor) performEncryption(textBytes []byte, passphrase *memguard.
 	e.lastOperation = "encrypt"
 	e.operationTime = time.Now()
 
-	// Apply padding to obscure plaintext length
+	// Apply padding to obscure plaintext length (traffic analysis resistance)
 	paddedText := padTo1024Multiple(textBytes)
 	textBuffer := memguard.NewBufferFromBytes(paddedText)
 	defer textBuffer.Destroy()
@@ -607,6 +627,7 @@ func (e *SecureEditor) performEncryption(textBytes []byte, passphrase *memguard.
 
 	// Derive encryption key using Argon2id
 	key := argon2.IDKey(passphrase.Bytes(), salt, argon2Time, argon2Memory, argon2Threads, argon2KeyLen)
+	// Zero key after use (defer ensures execution even on early return)
 	defer func() {
 		for i := range key {
 			key[i] = 0
@@ -659,10 +680,11 @@ func (e *SecureEditor) decryptText() {
 	})
 }
 
-// performDecryption executes the AES-GCM decryption with Argon2 key derivation
+// performDecryption executes the AES-GCM decryption with Argon2 key derivation.
+// NOTE: Caller (decryptText) must ensure e.mu is locked for rate-limiting state access.
 func (e *SecureEditor) performDecryption(encryptedData string, passphrase *memguard.LockedBuffer) (string, error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
+	// e.mu is already locked by decryptText() before calling this method
+	// Rate limiting state is protected by the same mutex
 
 	e.lastOperation = "decrypt"
 	e.operationTime = time.Now()
@@ -726,34 +748,55 @@ func (e *SecureEditor) performDecryption(encryptedData string, passphrase *memgu
 	return string(cleanText), nil
 }
 
-// padTo1024Multiple adds minimal padding to align data to 1024-byte boundaries
+// padTo1024Multiple adds minimal padding to obscure plaintext length patterns.
+// Uses ISO/IEC 7816-4 style padding: 0x80 marker followed by zero bytes.
+// This is NOT for cryptographic padding (AES-GCM doesn't need it) but for
+// traffic analysis resistance by aligning output to fixed boundaries.
 func padTo1024Multiple(data []byte) []byte {
 	const blockSize = 1024
-	paddingNeeded := blockSize - (len(data) % blockSize)
-	if paddingNeeded == blockSize {
-		paddingNeeded = 0
-	}
-	if paddingNeeded == 0 {
+	remainder := len(data) % blockSize
+
+	// Already aligned → no padding needed
+	if remainder == 0 {
 		return data
 	}
+
+	paddingNeeded := blockSize - remainder
 	paddedData := make([]byte, len(data)+paddingNeeded)
 	copy(paddedData, data)
-	// Mark padding start with 0x80 byte
+
+	// ISO/IEC 7816-4 padding marker
 	paddedData[len(data)] = 0x80
+	// Remaining bytes stay 0x00 (zero-initialized by make)
+
 	return paddedData
 }
 
-// remove1024Padding strips padding added by padTo1024Multiple
+// remove1024Padding strips padding added by padTo1024Multiple.
+// Returns error if padding marker is missing or malformed.
 func remove1024Padding(data []byte) ([]byte, error) {
 	if len(data) == 0 {
 		return nil, errors.New("cannot remove padding from empty data")
 	}
-	// Search backwards for padding marker
+
+	// Data already aligned? Check if padding is actually present
+	if len(data)%1024 != 0 {
+		// Not aligned → likely unpadded, return as-is
+		return data, nil
+	}
+
+	// Search backwards for the 0x80 marker
 	for i := len(data) - 1; i >= 0; i-- {
 		if data[i] == 0x80 {
 			return data[:i], nil
 		}
+		// If we hit non-zero bytes before finding 0x80, data may be corrupted
+		// or legitimately contain binary data. Conservative approach: return as-is.
+		if data[i] != 0x00 {
+			break
+		}
 	}
-	// No padding marker found: return data as-is (may be unpadded)
+
+	// No marker found → assume data was stored without padding
 	return data, nil
 }
