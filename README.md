@@ -38,7 +38,7 @@ MicroCrypt uses the following components:
 
 2. **Argon2id**
    A memory-hard password-based key derivation function designed
-   to resist brute-force and GPU-based attacks.
+   to resist brute-force and GPU-based attacks.  
    Parameters:       
    - Time: 3 passes    
    - Memory: 64 MB    
