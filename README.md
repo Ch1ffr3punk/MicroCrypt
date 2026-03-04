@@ -64,14 +64,14 @@ every 24 characters for easier handling.
 ## Use Cases
 
  MicroCrypt is suitable for:    
- - Encrypting private Messages or notes with a simple GUI   
+ - Encrypting private messages or notes with a simple GUI   
  - Cross-platform workflows where the same tool is needed on desktop and     
    Android or iOS   
  - Users who want strong encryption without complex configuration    
  - Situations where avoiding metadata leakage is important    
 
  MicroCrypt is not intended for:
- - For input of large messages or pasting files   
+ - Input of large messages or pasting files   
  - Public-key encryption or key exchange Workflows    
  - Enterprise or multi-user key Management    
  - Automated or scripted encryption Pipelines    
