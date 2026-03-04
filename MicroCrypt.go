@@ -270,6 +270,7 @@ func (se *SecureEntry) TypedKey(key *fyne.KeyEvent) {
 }
 func (se *SecureEntry) AcceptsTab() bool { return false }
 
+// SecureEditor represents the main application structure for the secure text editor
 type SecureEditor struct {
 	app      fyne.App
 	window   fyne.Window
@@ -288,6 +289,8 @@ type SecureEditor struct {
 	lastAttempt     time.Time
 	lastOperation   string
 	operationTime   time.Time
+
+	// Reference to theme toggle button for dynamic icon updates
 	themeSwitch *widget.Button
 }
 
@@ -348,64 +351,71 @@ func main() {
 	editor.window.ShowAndRun()
 }
 
+// getThemeIcon returns the appropriate emoji for the current theme state
+func (e *SecureEditor) getThemeIcon() string {
+	if e.isDarkTheme {
+		return "☀️"
+	}
+	return "🌙"
+}
+
 // setupMobileUI constructs the responsive user interface layout
 func (e *SecureEditor) setupMobileUI() fyne.CanvasObject {
-    e.textArea = NewSecureEntry()
-    e.textArea.SetPlaceHolder("Enter text...")
+	e.textArea = NewSecureEntry()
+	e.textArea.SetPlaceHolder("Enter text...")
 
-    // Primary action buttons
-    encryptBtn := widget.NewButton("Encrypt", e.encryptText)
-    encryptBtn.Importance = widget.HighImportance
-    decryptBtn := widget.NewButton("Decrypt", e.decryptText)
-    decryptBtn.Importance = widget.HighImportance
-    clearBtn := widget.NewButton("Clear", e.clearEditor)
-    clearBtn.Importance = widget.MediumImportance
+	// Primary action buttons
+	encryptBtn := widget.NewButton("Encrypt", e.encryptText)
+	encryptBtn.Importance = widget.HighImportance
+	decryptBtn := widget.NewButton("Decrypt", e.decryptText)
+	decryptBtn.Importance = widget.HighImportance
+	clearBtn := widget.NewButton("Clear", e.clearEditor)
+	clearBtn.Importance = widget.MediumImportance
 
-    // Secondary utility buttons
-    selectAllBtn := widget.NewButton("Select All", e.selectAll)
-    selectAllBtn.Importance = widget.MediumImportance
-    copyBtn := widget.NewButton("Copy", e.copyToClipboard)
-    copyBtn.Importance = widget.MediumImportance
-    pasteBtn := widget.NewButton("Paste", e.pasteFromClipboard)
-    pasteBtn.Importance = widget.MediumImportance
+	// Secondary utility buttons
+	selectAllBtn := widget.NewButton("Select All", e.selectAll)
+	selectAllBtn.Importance = widget.MediumImportance
+	copyBtn := widget.NewButton("Copy", e.copyToClipboard)
+	copyBtn.Importance = widget.MediumImportance
+	pasteBtn := widget.NewButton("Paste", e.pasteFromClipboard)
+	pasteBtn.Importance = widget.MediumImportance
 
-    // Theme Switch Button with emoji
-    themeSwitch := widget.NewButton("☀️", e.toggleTheme)
-    themeSwitch.Importance = widget.LowImportance
-    e.themeSwitch = themeSwitch
+	// Theme toggle button with emoji icon (Android-compatible)
+	e.themeSwitch = widget.NewButton(e.getThemeIcon(), e.toggleTheme)
+	e.themeSwitch.Importance = widget.LowImportance
 
-    topBar := container.NewHBox(layout.NewSpacer(), themeSwitch)
+	topBar := container.NewHBox(layout.NewSpacer(), e.themeSwitch)
 
-    // Responsive layout based on screen size
-    var firstButtonRow fyne.CanvasObject
-    var secondButtonRow fyne.CanvasObject
+	// Responsive layout based on screen size
+	var firstButtonRow fyne.CanvasObject
+	var secondButtonRow fyne.CanvasObject
 
-    if e.isVerySmallScreen() {
-        firstButtonRow = container.NewVBox(encryptBtn, decryptBtn, clearBtn)
-        secondButtonRow = container.NewVBox(selectAllBtn, copyBtn, pasteBtn)
-    } else if e.isMobile {
-        firstButtonRow = container.New(layout.NewGridLayoutWithColumns(3),
-            encryptBtn, decryptBtn, clearBtn)
-        secondButtonRow = container.New(layout.NewGridLayoutWithColumns(3),
-            selectAllBtn, copyBtn, pasteBtn)
-    } else {
-        firstButtonRow = container.New(layout.NewGridLayoutWithColumns(3),
-            encryptBtn, decryptBtn, clearBtn)
-        secondButtonRow = container.New(layout.NewGridLayoutWithColumns(3),
-            selectAllBtn, copyBtn, pasteBtn)
-    }
+	if e.isVerySmallScreen() {
+		firstButtonRow = container.NewVBox(encryptBtn, decryptBtn, clearBtn)
+		secondButtonRow = container.NewVBox(selectAllBtn, copyBtn, pasteBtn)
+	} else if e.isMobile {
+		firstButtonRow = container.New(layout.NewGridLayoutWithColumns(3),
+			encryptBtn, decryptBtn, clearBtn)
+		secondButtonRow = container.New(layout.NewGridLayoutWithColumns(3),
+			selectAllBtn, copyBtn, pasteBtn)
+	} else {
+		firstButtonRow = container.New(layout.NewGridLayoutWithColumns(3),
+			encryptBtn, decryptBtn, clearBtn)
+		secondButtonRow = container.New(layout.NewGridLayoutWithColumns(3),
+			selectAllBtn, copyBtn, pasteBtn)
+	}
 
-    headerContainer := container.NewVBox(
-        topBar,
-        widget.NewSeparator(),
-        container.NewPadded(firstButtonRow),
-        container.NewPadded(secondButtonRow),
-        widget.NewSeparator(),
-    )
+	headerContainer := container.NewVBox(
+		topBar,
+		widget.NewSeparator(),
+		container.NewPadded(firstButtonRow),
+		container.NewPadded(secondButtonRow),
+		widget.NewSeparator(),
+	)
 
-    return container.NewPadded(
-        container.NewBorder(headerContainer, nil, nil, nil, container.NewVScroll(e.textArea)),
-    )
+	return container.NewPadded(
+		container.NewBorder(headerContainer, nil, nil, nil, container.NewVScroll(e.textArea)),
+	)
 }
 
 // isVerySmallScreen checks if the window width is below the mobile threshold
@@ -462,27 +472,23 @@ func (e *SecureEditor) pasteFromClipboard() {
 
 // toggleTheme switches between dark and light UI themes
 func (e *SecureEditor) toggleTheme() {
-    e.mu.Lock()
-    defer e.mu.Unlock()
+	e.mu.Lock()
+	defer e.mu.Unlock()
 
-    if e.isDarkTheme {
-        e.app.Settings().SetTheme(theme.LightTheme())
-        e.isDarkTheme = false
-        if e.themeSwitch != nil {
-            e.themeSwitch.SetText("🌙")
-        }
-    } else {
-        e.app.Settings().SetTheme(theme.DarkTheme())
-        e.isDarkTheme = true
-        if e.themeSwitch != nil {
-            e.themeSwitch.SetText("☀️")
-        }
-    }
-    
-    // Refresh UI to apply theme change
-    if e.window != nil {
-        e.window.Content().Refresh()
-    }
+	if e.isDarkTheme {
+		e.app.Settings().SetTheme(theme.LightTheme())
+		e.isDarkTheme = false
+	} else {
+		e.app.Settings().SetTheme(theme.DarkTheme())
+		e.isDarkTheme = true
+	}
+
+	// Update theme button icon to reflect new state and refresh UI
+	if e.themeSwitch != nil {
+		e.themeSwitch.SetText(e.getThemeIcon())
+		e.themeSwitch.Refresh()
+	}
+	e.window.Content().Refresh()
 }
 
 // askPassword prompts the user for a password with minimum length validation

@@ -44,8 +44,8 @@ MicroCrypt uses the following components:
    - Parallelism: 4 threads    
 
 3. **ISO/IEC 7816-4 Padding**
-   Data is padded to 1 KB boundaries before encryption.  
-   This helps reduce leakage about the original file size.      
+   Data is padded to 1 KB boundaries before encryption. This helps    
+   reduce leakage about the original file size.    
 
 ## Encrypted Output Format
 
@@ -63,14 +63,14 @@ every 24 characters for easier handling.
 ## Use Cases
 
  MicroCrypt is suitable for:    
- - Encrypting private messages or notes with a simple GUI   
+ - Encrypting private Messages or notes with a simple GUI   
  - Cross-platform workflows where the same tool is needed on desktop and     
    Android or iOS   
  - Users who want strong encryption without complex configuration    
  - Situations where avoiding metadata leakage is important    
 
  MicroCrypt is not intended for:
- - For input of large messages or pasting files  
+ - For input of large messages or pasting files   
  - Public-key encryption or key exchange Workflows    
  - Enterprise or multi-user key Management    
  - Automated or scripted encryption Pipelines    
