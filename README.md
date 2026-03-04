@@ -37,13 +37,13 @@ MicroCrypt uses the following components:
    integrity of the encrypted data.    
 
 2. **Argon2id**
-   A memory-hard password-based key derivation function designed to      
-   resist brute-force and GPU-based attacks. Parameters:     
+   A memory-hard password-based key derivation function designed
+   to resist brute-force and GPU-based attacks. Parameters:     
    - Time: 3 passes    
    - Memory: 64 MB    
    - Parallelism: 4 threads    
 
-3. **ISO/IEC 7816-4 Padding**
+4. **ISO/IEC 7816-4 Padding**
    Data is padded to 1 KB boundaries before encryption. This helps    
    reduce leakage about the original file size.    
 
