@@ -1,7 +1,7 @@
 # MicroCrypt
 
 MicroCrypt is a small, cross-platform symmetric encryption tool for    
-desktop and mobile devices. It focuses on simplicity, portability,  
+mobile devices and desktop computers. It focuses on simplicity, portability,  
 and modern cryptographic defaults while avoiding unnecessary metadata  
 in encrypted output.    
 
