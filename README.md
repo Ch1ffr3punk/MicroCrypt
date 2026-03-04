@@ -69,7 +69,8 @@ every 24 characters for easier handling.
  - Users who want strong encryption without complex configuration    
  - Situations where avoiding metadata leakage is important    
 
- MicroCrypt is not intended for:    
+ MicroCrypt is not intended for:
+ - For input of large messages or pasting files  
  - Public-key encryption or key exchange Workflows    
  - Enterprise or multi-user key Management    
  - Automated or scripted encryption Pipelines    
