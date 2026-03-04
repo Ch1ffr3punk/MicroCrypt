@@ -592,50 +592,68 @@ func (e *SecureEditor) clearEditor() {
 	e.cleanup()
 }
 
-// encryptText handles the encryption workflow with input validation
+// encryptText handles the encryption workflow with input validation.
+// It uses an asynchronous password prompt and ensures thread safety by 
+// locking the editor's state only when the encryption process begins.
 func (e *SecureEditor) encryptText() {
+	// 1. Initial check of the UI state (Read-Lock)
 	e.mu.RLock()
+	if e.textArea == nil {
+		e.mu.RUnlock()
+		return
+	}
 	text := e.textArea.GetText()
 	e.mu.RUnlock()
 
-	// Validate input and show user feedback if empty
+	// Validate input before prompting for password
 	if text == "" {
 		dialog.ShowInformation("", "Please enter text to encrypt", e.window)
 		return
 	}
 
+	// 2. Request password from user (Asynchronous UI Dialog)
 	e.askPassword(func(passphrase *memguard.LockedBuffer, err error) {
 		if err != nil {
+			// User cancelled or validation failed
 			return
 		}
+		// Ensure the sensitive passphrase buffer is destroyed after this callback
 		defer passphrase.Destroy()
 
-		encryptedData, err := e.performEncryption([]byte(text), passphrase)
-		if err != nil {
-			dialog.ShowError(err, e.window)
+		// 3. Perform encryption (Write-Lock)
+		// We lock here to protect the operation metadata and internal state
+		e.mu.Lock()
+		
+		// Update operation tracking for audit/state purposes
+		e.lastOperation = "encrypt"
+		e.operationTime = time.Now()
+
+		// Execute the cryptographic logic
+		// We use a helper to keep the encryption logic clean
+		encryptedData, encErr := e.internalEncrypt([]byte(text), passphrase)
+		
+		if encErr != nil {
+			e.mu.Unlock()
+			dialog.ShowError(encErr, e.window)
 			return
 		}
 
-		e.mu.Lock()
+		// Update the UI with the result and release the lock
 		e.textArea.SetText(encryptedData)
 		e.mu.Unlock()
+		
 	})
 }
 
-// performEncryption executes the AES-GCM encryption with Argon2 key derivation
-func (e *SecureEditor) performEncryption(textBytes []byte, passphrase *memguard.LockedBuffer) (string, error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	e.lastOperation = "encrypt"
-	e.operationTime = time.Now()
-
+// internalEncrypt contains the core cryptographic logic for AES-GCM.
+// It assumes the caller handles mutex locking.
+func (e *SecureEditor) internalEncrypt(textBytes []byte, passphrase *memguard.LockedBuffer) (string, error) {
 	// Apply padding to obscure plaintext length (traffic analysis resistance)
 	paddedText := padTo1024Multiple(textBytes)
 	textBuffer := memguard.NewBufferFromBytes(paddedText)
 	defer textBuffer.Destroy()
 
-	// Generate random salt and nonce for this encryption operation
+	// Generate random salt and nonce
 	salt, nonce := make([]byte, saltLen), make([]byte, nonceLen)
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
@@ -646,14 +664,14 @@ func (e *SecureEditor) performEncryption(textBytes []byte, passphrase *memguard.
 
 	// Derive encryption key using Argon2id
 	key := argon2.IDKey(passphrase.Bytes(), salt, argon2Time, argon2Memory, argon2Threads, argon2KeyLen)
-	// Zero key after use (defer ensures execution even on early return)
+	// Securely zero the key after the block cipher is initialized
 	defer func() {
 		for i := range key {
 			key[i] = 0
 		}
 	}()
 
-	// Perform AES-GCM encryption
+	// Initialize AES-GCM
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
@@ -662,64 +680,90 @@ func (e *SecureEditor) performEncryption(textBytes []byte, passphrase *memguard.
 	if err != nil {
 		return "", err
 	}
+
+	// Encrypt the padded data
 	ciphertext := aesgcm.Seal(nil, nonce, textBuffer.Bytes(), nil)
 
-	// Concatenate salt + nonce + ciphertext for storage
-	encryptedData := append(salt, append(nonce, ciphertext...)...)
-	return formatBase64Short(base64.StdEncoding.EncodeToString(encryptedData)), nil
+	// Combine components: Salt + Nonce + Ciphertext
+	combinedPayload := append(salt, append(nonce, ciphertext...)...)
+	
+	// Return as formatted Base64 for easy copy-pasting
+	return formatBase64Short(base64.StdEncoding.EncodeToString(combinedPayload)), nil
 }
 
-// decryptText handles the decryption workflow with input validation and rate limiting
+// decryptText handles the decryption workflow with input validation and rate limiting.
+// It uses an asynchronous callback for password entry, ensuring thread safety
+// by locking the mutex only when the actual processing begins.
 func (e *SecureEditor) decryptText() {
+	// 1. Initial check of the UI state (Read-Lock)
 	e.mu.RLock()
+	if e.textArea == nil {
+		e.mu.RUnlock()
+		return
+	}
 	text := e.textArea.GetText()
 	e.mu.RUnlock()
 
-	// Validate input and show user feedback if empty
+	// Validate input before prompting for password
 	if text == "" {
 		dialog.ShowInformation("", "Please paste encrypted text to decrypt", e.window)
 		return
 	}
 
+	// 2. Request password from user (Asynchronous UI Dialog)
 	e.askPassword(func(passphrase *memguard.LockedBuffer, err error) {
 		if err != nil {
+			// User cancelled or password too short
 			return
 		}
+		// Ensure the sensitive passphrase buffer is destroyed after this callback
 		defer passphrase.Destroy()
 
-		decryptedText, err := e.performDecryption(text, passphrase)
-		if err != nil {
-			dialog.ShowError(err, e.window)
+		// 3. Start sensitive operations (Write-Lock)
+		// We lock here because we are about to modify/read rate-limiting state
+		// and perform the cryptographic operations.
+		e.mu.Lock()
+		
+		// Update operation tracking
+		e.lastOperation = "decrypt"
+		e.operationTime = time.Now()
+
+		// Rate limiting: check if the user is currently blocked
+		now := time.Now()
+		if now.Sub(e.lastAttempt) > rateLimitDuration {
+			e.decryptAttempts = 0
+		}
+		e.lastAttempt = now
+
+		if e.decryptAttempts >= maxDecryptAttempts {
+			e.mu.Unlock() // Unlock before showing dialog to prevent UI deadlocks
+			dialog.ShowError(errors.New("rate limited: too many failed attempts"), e.window)
 			return
 		}
 
-		e.mu.Lock()
+		// Perform the actual decryption
+		// Note: performDecryption logic is moved/integrated here or called with 
+		// the understanding that the lock is already held.
+		decryptedText, decErr := e.internalDecrypt(text, passphrase)
+		
+		if decErr != nil {
+			e.decryptAttempts++
+			e.mu.Unlock()
+			dialog.ShowError(decErr, e.window)
+			return
+		}
+
+		// Success: Reset attempts and update UI
+		e.decryptAttempts = 0
 		e.textArea.SetText(decryptedText)
 		e.mu.Unlock()
+		
 	})
 }
 
-// performDecryption executes the AES-GCM decryption with Argon2 key derivation.
-// NOTE: Caller (decryptText) must ensure e.mu is locked for rate-limiting state access.
-func (e *SecureEditor) performDecryption(encryptedData string, passphrase *memguard.LockedBuffer) (string, error) {
-	// e.mu is already locked by decryptText() before calling this method
-	// Rate limiting state is protected by the same mutex
-
-	e.lastOperation = "decrypt"
-	e.operationTime = time.Now()
-
-	// Rate limiting: prevent brute-force attacks
-	now := time.Now()
-	if now.Sub(e.lastAttempt) > rateLimitDuration {
-		e.decryptAttempts = 0
-	}
-	e.lastAttempt = now
-
-	if e.decryptAttempts >= maxDecryptAttempts {
-		return "", errors.New("rate limited: too many failed attempts")
-	}
-	e.decryptAttempts++
-
+// internalDecrypt performs the cryptographic heavy lifting. 
+// It assumes the caller handles mutex locking for shared state.
+func (e *SecureEditor) internalDecrypt(encryptedData string, passphrase *memguard.LockedBuffer) (string, error) {
 	// Decode and parse the encrypted payload
 	encryptedBytes, err := decodeFormattedBase64(encryptedData)
 	if err != nil || len(encryptedBytes) < saltLen+nonceLen {
@@ -730,15 +774,17 @@ func (e *SecureEditor) performDecryption(encryptedData string, passphrase *memgu
 	nonce := encryptedBytes[saltLen : saltLen+nonceLen]
 	ciphertext := encryptedBytes[saltLen+nonceLen:]
 
-	// Derive decryption key using the same Argon2 parameters
+	// Derive decryption key using Argon2id
+	// Use passphrase.Bytes() directly from protected memory
 	key := argon2.IDKey(passphrase.Bytes(), salt, argon2Time, argon2Memory, argon2Threads, argon2KeyLen)
 	defer func() {
+		// Manual zeroing of the derived key for extra safety
 		for i := range key {
 			key[i] = 0
 		}
 	}()
 
-	// Perform AES-GCM decryption and authentication
+	// Initialize AES-GCM
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
@@ -748,15 +794,13 @@ func (e *SecureEditor) performDecryption(encryptedData string, passphrase *memgu
 		return "", err
 	}
 
+	// Decrypt and verify authentication tag
 	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
 		return "", errors.New("authentication failed: incorrect password or corrupted data")
 	}
 
-	// Reset attempt counter on successful decryption
-	e.decryptAttempts = 0
-
-	// Remove padding and return plaintext
+	// Remove security padding (traffic analysis resistance)
 	plaintextBuffer := memguard.NewBufferFromBytes(plaintext)
 	defer plaintextBuffer.Destroy()
 
@@ -764,6 +808,7 @@ func (e *SecureEditor) performDecryption(encryptedData string, passphrase *memgu
 	if err != nil {
 		return "", err
 	}
+	
 	return string(cleanText), nil
 }
 
