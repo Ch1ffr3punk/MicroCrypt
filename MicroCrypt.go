@@ -102,6 +102,7 @@ func (se *SecureEntry) GetText() string {
 
 // WithBuffer executes the provided function with direct access to the protected buffer.
 // This avoids creating unprotected string copies and is the preferred way to process sensitive data.
+
 func (se *SecureEntry) WithBuffer(fn func(*memguard.LockedBuffer) error) error {
 	se.mu.Lock()
 	defer se.mu.Unlock()
