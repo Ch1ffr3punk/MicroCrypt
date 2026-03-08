@@ -101,8 +101,8 @@ func (se *SecureEntry) GetText() string {
 }
 
 // WithBuffer führt die übergebene Funktion mit direktem Zugriff auf den geschützten Puffer aus.
-// Dies vermeidet die Erstellung ungeschützter String-Kopien und ist die bevorzugte Methode
-// zur Verarbeitung sensibler Daten.
+// Dies vermeidet die Erstellung ungeschützter String-Kopien und ist die bevorzugte Methode zur Verarbeitung sensibler Daten.
+
 func (se *SecureEntry) WithBuffer(fn func(*memguard.LockedBuffer) error) error {
 	se.mu.Lock()
 	defer se.mu.Unlock()
@@ -743,6 +743,8 @@ func (e *SecureEditor) decryptText() {
 		}
 
 		// Tatsächliche Entschlüsselung durchführen
+        // Hinweis: Die Logik „performDecryption“ wird hierher verschoben/integriert oder unter der Voraussetzung aufgerufen, 
+        // dass die Sperre bereits gesetzt ist.
 		decryptedText, decErr := e.internalDecrypt(text, passphrase)
 		
 		if decErr != nil {
