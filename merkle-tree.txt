@@ -2,11 +2,11 @@
 LICENSE: 304c26c26e8af4d60f1e0818baa73f8ac9b511fd
 MicroCrypt.go: 884d5cd329011e1b93f5e5f15a7f2222804245da
 MicroCrypt.png: d39bedff9b904aad7805a9ba1e232a9675993f4b
-README.md: 2bd0f9df6fe0d63febecde46958cfe3871ee5fe8
+README.md: bac5e7f7c23d38950fc6b2edbaafaf23cace8119
 go.mod: 92eea49aa3b4dd28b3e18073134968a4275a8355
 go.sum: ea47334d1e75355b7bb63b3203268b861ef914da
 img\1.png: 161967edf3f91dba4f590a1b7b168fef6f62610a
 localization\MicroCrypt-de.go: 0024cac5691ed526acfd9ad38db4b879e708f8b1
 
 --- ROOT HASH (RIPEMD-160) ---
-20bf1f4b25f1e039bf80d2e1f240c317c4a5d2ac
+5388aea1819558b787ace66a18e9ce18fc79ae21
