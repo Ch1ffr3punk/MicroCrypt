@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -102,7 +103,6 @@ func (se *SecureEntry) GetText() string {
 
 // WithBuffer executes the provided function with direct access to the protected buffer.
 // This avoids creating unprotected string copies and is the preferred way to process sensitive data.
-
 func (se *SecureEntry) WithBuffer(fn func(*memguard.LockedBuffer) error) error {
 	se.mu.Lock()
 	defer se.mu.Unlock()
@@ -360,6 +360,41 @@ func (e *SecureEditor) getThemeIcon() string {
 	return "🌙"
 }
 
+// showInfoPopup displays information about the application
+func (e *SecureEditor) showInfoPopup() {
+	projURL, _ := url.Parse("https://github.com/Ch1ffr3punk/MicroCrypt")
+	
+	projectLink := widget.NewHyperlink("An Open Source project", projURL)
+	
+	okButton := widget.NewButton("OK", func() {
+		overlays := e.window.Canvas().Overlays()
+		if overlays.Top() != nil {
+			overlays.Remove(overlays.Top())
+		}
+	})
+	okButton.Importance = widget.HighImportance
+	
+	content := container.NewVBox(
+		widget.NewLabelWithStyle("MicroCrypt v0.1.2", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewSeparator(),
+		container.NewHBox(
+			layout.NewSpacer(),
+			projectLink,
+			layout.NewSpacer(),
+		),
+		widget.NewLabelWithStyle("released under the Apache 2.0 license", fyne.TextAlignCenter, fyne.TextStyle{}),
+		widget.NewLabelWithStyle("© 2026 Ch1ffr3punk", fyne.TextAlignCenter, fyne.TextStyle{}),
+		widget.NewLabel(""),
+		container.NewHBox(
+			layout.NewSpacer(),
+			okButton,
+			layout.NewSpacer(),
+		),
+	)
+
+	dialog.ShowCustomWithoutButtons("", content, e.window)
+}
+
 // setupMobileUI constructs the responsive user interface layout
 func (e *SecureEditor) setupMobileUI() fyne.CanvasObject {
 	e.textArea = NewSecureEntry()
@@ -381,11 +416,20 @@ func (e *SecureEditor) setupMobileUI() fyne.CanvasObject {
 	pasteBtn := widget.NewButton("Paste", e.pasteFromClipboard)
 	pasteBtn.Importance = widget.MediumImportance
 
+	// Create info button
+	infoBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), e.showInfoPopup)
+	infoBtn.Importance = widget.LowImportance
+	
 	// Theme toggle button with emoji icon (Android-compatible)
 	e.themeSwitch = widget.NewButton(e.getThemeIcon(), e.toggleTheme)
 	e.themeSwitch.Importance = widget.LowImportance
 
-	topBar := container.NewHBox(layout.NewSpacer(), e.themeSwitch)
+	// Top bar with info button on left and theme button on right
+	topBar := container.NewHBox(
+		infoBtn,
+		layout.NewSpacer(),
+		e.themeSwitch,
+	)
 
 	// Responsive layout based on screen size
 	var firstButtonRow fyne.CanvasObject

@@ -1,7 +1,7 @@
 # MicroCrypt
 
 MicroCrypt is a small, cross-platform symmetric encryption tool for    
-mobile devices and desktop computers. It focuses on simplicity, portability,  
+desktop and mobile devices. It focuses on simplicity, portability,  
 and modern cryptographic defaults while avoiding unnecessary metadata  
 in encrypted output.    
 
@@ -37,15 +37,14 @@ MicroCrypt uses the following components:
    integrity of the encrypted data.    
 
 2. **Argon2id**
-   A memory-hard password-based key derivation function designed
-   to resist brute-force and GPU-based attacks.  
-   Parameters:       
+   A memory-hard password-based key derivation function designed to    
+   resist brute-force and GPU-based attacks. Parameters:     
    - Time: 3 passes    
    - Memory: 64 MB    
    - Parallelism: 4 threads    
 
-4. **ISO/IEC 7816-4 Padding**
-   Data is padded to 1 KB boundaries before encryption. This helps
+3. **ISO/IEC 7816-4 Padding**
+   Data is padded to 1 KB boundaries before encryption. This helps    
    reduce leakage about the original file size.    
 
 ## Encrypted Output Format
@@ -64,19 +63,19 @@ every 24 characters for easier handling.
 ## Use Cases
 
  MicroCrypt is suitable for:    
- - Encrypting private messages or notes with a simple GUI   
+ - Encrypting private Messages or notes with a simple GUI   
  - Cross-platform workflows where the same tool is needed on desktop and     
    Android or iOS   
  - Users who want strong encryption without complex configuration    
  - Situations where avoiding metadata leakage is important    
 
  MicroCrypt is not intended for:
- - Input of large messages or pasting files   
+ - For input of large messages or pasting files   
  - Public-key encryption or key exchange Workflows    
  - Enterprise or multi-user key Management    
  - Automated or scripted encryption Pipelines    
 
-Special thanks go to [Maria Sophia](https://newsgrouper.org/comp.mobile.android/1772049649/1772488033) for valuable feedback, and to [Ffna Sol](https://www.fiverr.com/ffna_sol) for the MicroCrypt icon design.      
+Special thanks go to [Maria Sophia](https://newsgrouper.org/comp.mobile.android/1772049649/1772488033) and [Arno Welzel](https://arnowelzel.de/) for their valuable feedback, and to [Ffna Sol](https://www.fiverr.com/ffna_sol) for the MicroCrypt icon design.      
 
 ![MicroCrypt](img/1.png)  
 

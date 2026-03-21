@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+    "net/url"
 	"strings"
 	"sync"
 	"time"
@@ -101,8 +102,8 @@ func (se *SecureEntry) GetText() string {
 }
 
 // WithBuffer führt die übergebene Funktion mit direktem Zugriff auf den geschützten Puffer aus.
-// Dies vermeidet die Erstellung ungeschützter String-Kopien und ist die bevorzugte Methode zur Verarbeitung sensibler Daten.
-
+// Dies vermeidet die Erstellung ungeschützter String-Kopien und ist die bevorzugte Methode
+// zur Verarbeitung sensibler Daten.
 func (se *SecureEntry) WithBuffer(fn func(*memguard.LockedBuffer) error) error {
 	se.mu.Lock()
 	defer se.mu.Unlock()
@@ -361,6 +362,41 @@ func (e *SecureEditor) getThemeIcon() string {
 }
 
 // setupMobileUI erstellt das responsive Benutzeroberflächen-Layout
+func (e *SecureEditor) showInfoPopup() {
+	projURL, _ := url.Parse("https://github.com/Ch1ffr3punk/MicroCrypt")
+	
+	projectLink := widget.NewHyperlink("Ein Open Source Projekt", projURL)
+	
+	okButton := widget.NewButton("OK", func() {
+		overlays := e.window.Canvas().Overlays()
+		if overlays.Top() != nil {
+			overlays.Remove(overlays.Top())
+		}
+	})
+	okButton.Importance = widget.HighImportance
+	
+	content := container.NewVBox(
+		widget.NewLabelWithStyle("MicroCrypt v0.1.2", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewSeparator(),
+		container.NewHBox(
+			layout.NewSpacer(),
+			projectLink,
+			layout.NewSpacer(),
+		),
+		widget.NewLabelWithStyle("veröffentlicht unter der Apache 2.0 Lizenz", fyne.TextAlignCenter, fyne.TextStyle{}),
+		widget.NewLabelWithStyle("© 2026 Ch1ffr3punk", fyne.TextAlignCenter, fyne.TextStyle{}),
+		widget.NewLabel(""),
+		container.NewHBox(
+			layout.NewSpacer(),
+			okButton,
+			layout.NewSpacer(),
+		),
+	)
+
+	dialog.ShowCustomWithoutButtons("", content, e.window)
+}
+
+// setupMobileUI constructs the responsive user interface layout
 func (e *SecureEditor) setupMobileUI() fyne.CanvasObject {
 	e.textArea = NewSecureEntry()
 	e.textArea.SetPlaceHolder("Text eingeben...")
@@ -381,12 +417,21 @@ func (e *SecureEditor) setupMobileUI() fyne.CanvasObject {
 	pasteBtn := widget.NewButton("Einfügen", e.pasteFromClipboard)
 	pasteBtn.Importance = widget.MediumImportance
 
-	// Theme-Umschaltknopf mit Emoji-Icon (Android-kompatibel)
+	// Create info button
+	infoBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), e.showInfoPopup)
+	infoBtn.Importance = widget.LowImportance
+	
+	// Themen Wechsel Button (Android-kompatibel)
 	e.themeSwitch = widget.NewButton(e.getThemeIcon(), e.toggleTheme)
 	e.themeSwitch.Importance = widget.LowImportance
 
-	topBar := container.NewHBox(layout.NewSpacer(), e.themeSwitch)
-
+	// Top bar mit info button links und theme button rechts
+	topBar := container.NewHBox(
+		infoBtn,
+		layout.NewSpacer(),
+		e.themeSwitch,
+	)
+	
 	// Responsives Layout basierend auf Bildschirmgröße
 	var firstButtonRow fyne.CanvasObject
 	var secondButtonRow fyne.CanvasObject
@@ -743,8 +788,6 @@ func (e *SecureEditor) decryptText() {
 		}
 
 		// Tatsächliche Entschlüsselung durchführen
-        // Hinweis: Die Logik „performDecryption“ wird hierher verschoben/integriert oder unter der Voraussetzung aufgerufen, 
-        // dass die Sperre bereits gesetzt ist.
 		decryptedText, decErr := e.internalDecrypt(text, passphrase)
 		
 		if decErr != nil {
@@ -798,7 +841,7 @@ func (e *SecureEditor) internalDecrypt(encryptedData string, passphrase *memguar
 	// Entschlüsseln und Authentifizierungs-Tag verifizieren
 	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return "", errors.New("Authentifizierung fehlgeschlagen: falsches Passwort oder korrupte Daten")
+		return "", errors.New("Authentifizierung fehlgeschlagen:\nFalsches Passwort oder korrupte Daten")
 	}
 
 	// Sicherheits-Padding entfernen (Verkehrsanalyse-Resistenz)
