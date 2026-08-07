@@ -50,7 +50,7 @@ type SecureEntry struct {
 
 func NewSecureEntry() *SecureEntry {
 	se := &SecureEntry{
-		placeholder:  "Enter text...",
+		placeholder:  "Text eingeben...",
 		lastActivity: time.Now(),
 	}
 	se.ExtendBaseWidget(se)
@@ -95,7 +95,7 @@ func (se *SecureEntry) WithBuffer(fn func(*memguard.LockedBuffer) error) error {
 	defer se.mu.Unlock()
 
 	if se.buffer == nil {
-		return errors.New("buffer is nil")
+		return errors.New("Puffer ist leer")
 	}
 	return fn(se.buffer)
 }
@@ -301,7 +301,7 @@ func main() {
 					editor.textArea.mu.Unlock()
 					editor.clearEditor()
 					fyne.Do(func() {
-						dialog.ShowInformation("", "Sensitive data auto-cleared\ndue to inactivity", editor.window)
+						dialog.ShowInformation("", "Sensible Daten aufgrund von\nInaktivität automatisch gelöscht", editor.window)
 					})
 				} else {
 					editor.textArea.mu.Unlock()
@@ -328,7 +328,7 @@ func (e *SecureEditor) getThemeIcon() string {
 func (e *SecureEditor) showInfoPopup() {
 	projURL, _ := url.Parse("https://github.com/Ch1ffr3punk/MicroCrypt")
 
-	projectLink := widget.NewHyperlink("An Open Source project", projURL)
+	projectLink := widget.NewHyperlink("Ein Open-Source-Projekt", projURL)
 
 	okButton := widget.NewButton("OK", func() {
 		overlays := e.window.Canvas().Overlays()
@@ -346,7 +346,7 @@ func (e *SecureEditor) showInfoPopup() {
 			projectLink,
 			layout.NewSpacer(),
 		),
-		widget.NewLabelWithStyle("released under the Apache 2.0 license", fyne.TextAlignCenter, fyne.TextStyle{}),
+		widget.NewLabelWithStyle("veröffentlicht unter der Apache-2.0-Lizenz", fyne.TextAlignCenter, fyne.TextStyle{}),
 		widget.NewLabelWithStyle("© 2026 Ch1ffr3punk", fyne.TextAlignCenter, fyne.TextStyle{}),
 		container.NewHBox(
 			layout.NewSpacer(),
@@ -360,20 +360,20 @@ func (e *SecureEditor) showInfoPopup() {
 
 func (e *SecureEditor) setupMobileUI() fyne.CanvasObject {
 	e.textArea = NewSecureEntry()
-	e.textArea.SetPlaceHolder("Enter text...")
+	e.textArea.SetPlaceHolder("Text eingeben...")
 
-	encryptBtn := widget.NewButton("Encrypt", e.encryptText)
+	encryptBtn := widget.NewButton("Verschlüsseln", e.encryptText)
 	encryptBtn.Importance = widget.HighImportance
-	decryptBtn := widget.NewButton("Decrypt", e.decryptText)
+	decryptBtn := widget.NewButton("Entschlüsseln", e.decryptText)
 	decryptBtn.Importance = widget.HighImportance
-	clearBtn := widget.NewButton("Clear", e.clearEditor)
+	clearBtn := widget.NewButton("Löschen", e.clearEditor)
 	clearBtn.Importance = widget.MediumImportance
 
-	selectAllBtn := widget.NewButton("Select All", e.selectAll)
+	selectAllBtn := widget.NewButton("Alles auswählen", e.selectAll)
 	selectAllBtn.Importance = widget.MediumImportance
-	copyBtn := widget.NewButton("Copy", e.copyToClipboard)
+	copyBtn := widget.NewButton("Kopieren", e.copyToClipboard)
 	copyBtn.Importance = widget.MediumImportance
-	pasteBtn := widget.NewButton("Paste", e.pasteFromClipboard)
+	pasteBtn := widget.NewButton("Einfügen", e.pasteFromClipboard)
 	pasteBtn.Importance = widget.MediumImportance
 
 	infoBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), e.showInfoPopup)
@@ -438,7 +438,7 @@ func (e *SecureEditor) copyToClipboard() {
 	e.mu.RUnlock()
 
 	if text == "" {
-		dialog.ShowInformation("", "Nothing to copy", e.window)
+		dialog.ShowInformation("", "Nichts zu kopieren", e.window)
 		return
 	}
 
@@ -458,7 +458,7 @@ func (e *SecureEditor) pasteFromClipboard() {
 
 	text := e.window.Clipboard().Content()
 	if text == "" {
-		dialog.ShowInformation("", "Clipboard is empty", e.window)
+		dialog.ShowInformation("", "Zwischenablage ist leer", e.window)
 		return
 	}
 
@@ -488,15 +488,15 @@ func (e *SecureEditor) toggleTheme() {
 func (e *SecureEditor) askPassword(callback func(*memguard.LockedBuffer, error)) {
 	passEntry := widget.NewPasswordEntry()
 	passEntry.SetPlaceHolder("")
-	formItems := []*widget.FormItem{widget.NewFormItem("Password", passEntry)}
+	formItems := []*widget.FormItem{widget.NewFormItem("Passwort", passEntry)}
 
-	dlg := dialog.NewForm("", "OK", "Cancel", formItems, func(confirmed bool) {
+	dlg := dialog.NewForm("", "OK", "Abbrechen", formItems, func(confirmed bool) {
 		if !confirmed {
-			callback(nil, errors.New("cancelled"))
+			callback(nil, errors.New("abgebrochen"))
 			return
 		}
 		if len(passEntry.Text) < 15 {
-			dialog.ShowInformation("", "Password too short\nMinimum 15 characters required", e.window)
+			dialog.ShowInformation("", "Passwort zu kurz\nMindestens 15 Zeichen erforderlich", e.window)
 			return
 		}
 		result := memguard.NewBufferFromBytes([]byte(passEntry.Text))
@@ -568,7 +568,7 @@ func (e *SecureEditor) cleanup() {
 
 func (e *SecureEditor) clearEditor() {
 	if e.textArea.GetText() == "" {
-		dialog.ShowInformation("", "Text area is already empty", e.window)
+		dialog.ShowInformation("", "Textbereich ist bereits leer", e.window)
 		return
 	}
 	e.cleanup()
@@ -584,7 +584,7 @@ func (e *SecureEditor) encryptText() {
 	e.mu.RUnlock()
 
 	if text == "" {
-		dialog.ShowInformation("", "Please enter text to encrypt", e.window)
+		dialog.ShowInformation("", "Bitte Text zum Verschlüsseln eingeben", e.window)
 		return
 	}
 
@@ -658,7 +658,7 @@ func (e *SecureEditor) decryptText() {
 	e.mu.RUnlock()
 
 	if text == "" {
-		dialog.ShowInformation("", "Please paste encrypted text to decrypt", e.window)
+		dialog.ShowInformation("", "Bitte verschlüsselten Text\nzum Entschlüsseln einfügen", e.window)
 		return
 	}
 
@@ -681,7 +681,7 @@ func (e *SecureEditor) decryptText() {
 
 		if e.decryptAttempts >= maxDecryptAttempts {
 			e.mu.Unlock()
-			dialog.ShowError(errors.New("rate limited: too many failed attempts"), e.window)
+			dialog.ShowError(errors.New("Ratenbegrenzung: zu viele fehlgeschlagene Versuche"), e.window)
 			return
 		}
 
@@ -703,7 +703,7 @@ func (e *SecureEditor) decryptText() {
 func (e *SecureEditor) internalDecrypt(encryptedData string, passphrase *memguard.LockedBuffer) (string, error) {
 	encryptedBytes, err := decodeFormattedBase64(encryptedData)
 	if err != nil || len(encryptedBytes) < saltLen+nonceLen {
-		return "", errors.New("invalid encrypted data format")
+		return "", errors.New("ungültiges Format der verschlüsselten Daten")
 	}
 
 	salt := encryptedBytes[:saltLen]
@@ -728,7 +728,7 @@ func (e *SecureEditor) internalDecrypt(encryptedData string, passphrase *memguar
 
 	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return "", errors.New("authentication failed: incorrect password or corrupted data")
+		return "", errors.New("Authentifizierung fehlgeschlagen:\nFalsches Passwort oder korrupte Daten")
 	}
 
 	plaintextBuffer := memguard.NewBufferFromBytes(plaintext)
@@ -760,7 +760,7 @@ func padTo4096Multiple(data []byte) []byte {
 
 func remove4096Padding(data []byte) ([]byte, error) {
 	if len(data) == 0 {
-		return nil, errors.New("cannot remove padding from empty data")
+		return nil, errors.New("Padding kann nicht von leeren Daten entfernt werden")
 	}
 
 	if len(data)%padBlockSize != 0 {

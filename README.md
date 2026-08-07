@@ -1,9 +1,6 @@
 # MicroCrypt
 
-MicroCrypt is a small, cross-platform symmetric encryption tool for    
-desktop and mobile devices. It focuses on simplicity, portability,  
-and modern cryptographic defaults while avoiding unnecessary metadata  
-in encrypted output.    
+MicroCrypt – For The Ones We Hold Dear    
 
 ## Security Considerations  
 
@@ -21,7 +18,7 @@ in encrypted output.
 
 - Symmetric file encryption using AES-256-GCM    
 - Password-based key derivation using Argon2id (OWASP-recommended parameters)    
-- ISO/IEC_7816-4 in 1 KB block multiples    
+- ISO/IEC_7816-4 in 4 KB block multiples    
 - Minimum 15-character password requirement (NIST 800-63B compliant)    
 - Simple graphical interface built with the Fyne toolkit    
 - Works on Linux, macOS, Windows, Android and iOS    
@@ -44,7 +41,7 @@ MicroCrypt uses the following components:
    - Parallelism: 4 threads    
 
 3. **ISO/IEC 7816-4 Padding**
-   Data is padded to 1 KB boundaries before encryption. This helps    
+   Data is padded to 4 KB boundaries before encryption. This helps    
    reduce leakage about the original file size.    
 
 ## Encrypted Output Format
@@ -58,7 +55,7 @@ MicroCrypt produces a self-contained base64-encoded string containing:
 | Ciphertext | Variable | AES-256-GCM encrypted data |  
 
 The three components are concatenated and base64-encoded with line breaks     
-every 24 characters for easier handling.   
+every 76 characters for easier handling.   
 
 ## Use Cases
 
@@ -77,15 +74,5 @@ every 24 characters for easier handling.
 
 Special thanks go to [Maria Sophia](https://newsgrouper.org/comp.mobile.android/1772049649/1772488033) for valuable feedback, and to [Ffna Sol](https://www.fiverr.com/ffna_sol) for the MicroCrypt icon design.      
 
-![MicroCrypt](img/1.png)  
-
-If you like MicroCrypt, as much as I do,  consider a small        
-donation in crypto currencies or buy me a coffee.         
-```  
-BTC: bc1qkluy2kj8ay64jjsk0wrfynp8gvjwet9926rdel    
-Nym: n1f0r6zzu5hgh4rprk2v2gqcyr0f5fr84zv69d3x     
-XMR: 45TJx8ZHngM4GuNfYxRw7R7vRyFgfMVp862JqycMrPmyfTfJAYcQGEzT27wL1z5RG1b5XfRPJk97KeZr1svK8qES2z1uZrS      
-```
-<a href="https://www.buymeacoffee.com/Ch1ffr3punk" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-yellow.png" alt="Buy Me A Coffee" height="41" width="174"></a>
-
-MicroCrypt is dedicated to Alice and Bob.  
+![MicroCrypt](img/1.png)
+![MicroCrypt](img/2.png)
