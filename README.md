@@ -72,7 +72,11 @@ every 76 characters for easier handling.
  - Enterprise or multi-user key Management    
  - Automated or scripted encryption Pipelines    
 
-Special thanks go to [Maria Sophia](https://newsgrouper.org/comp.mobile.android/1772049649/1772488033) for valuable feedback, and to [Ffna Sol](https://www.fiverr.com/ffna_sol) for the MicroCrypt icon design.      
+Special thanks go to [Maria Sophia](https://newsgrouper.org/comp.mobile.android/1772049649/1772488033) for valuable feedback, and to [Ffna Sol](https://www.fiverr.com/ffna_sol) for the MicroCrypt icon design. 
+
+A big thank you also goes to the following people who localized MicroCrypt:  
+
+[Uncle Lem](https://nymcheckby.unclelem.uk/) – Russian edition  
 
 ![MicroCrypt](img/1.png)
 ![MicroCrypt](img/2.png)
