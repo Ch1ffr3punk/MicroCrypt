@@ -80,6 +80,7 @@ A big thank you also goes to the following people who localized MicroCrypt:
 | :--- | :--- |
 | [Uncle Lem](https://nymcheckby.unclelem.uk/) | Russian |
 | [Gabx](https://virebent.art/) | Italian |
+| [shifty1594](hhttps://forum.nym.com/u/shifty1594/summary) | German |
 
 ![MicroCrypt](img/1.png)
 ![MicroCrypt](img/2.png)
