@@ -2,14 +2,20 @@
 LICENSE: 304c26c26e8af4d60f1e0818baa73f8ac9b511fd
 MicroCrypt.go: 79269df136bdb80efe3a7570b9911c36a29d5736
 MicroCrypt.png: d39bedff9b904aad7805a9ba1e232a9675993f4b
-README.md: 175344a79ae5653416421673675c22f2fc88526f
+README.md: b2bf3f4c5dce4616de166fd065a2c3b5591ca340
 go.mod: 92eea49aa3b4dd28b3e18073134968a4275a8355
 go.sum: ea47334d1e75355b7bb63b3203268b861ef914da
 img\1.png: 161967edf3f91dba4f590a1b7b168fef6f62610a
 img\2.png: 0fadd5ecd67b92713961ab1b7c179cc2d4e814c5
-localization\MicroCrypt-DE.go: e705e37fa2c32cc0fc8a4b0ee0a892b7d3da886e
+localization\MicroCrypt-DE\MicroCrypt-DE.go: e705e37fa2c32cc0fc8a4b0ee0a892b7d3da886e
+localization\MicroCrypt-DE\README-DE.md: ebc21bd1baf4570a53bc11105a46598432f66145
+localization\MicroCrypt-DE\go.mod: 92eea49aa3b4dd28b3e18073134968a4275a8355
+localization\MicroCrypt-DE\go.sum: ea47334d1e75355b7bb63b3203268b861ef914da
+localization\MicroCrypt-IT.go: 22dcf312da3275feb79196874cd42cb834579884
 localization\MicroCrypt-RU\MicroCrypt.go: 00a8e7c216c6dccb3b3f6f382cd9d3fee3315dfc
 localization\MicroCrypt-RU\README-RU.md: a24e0d64e8802e5fedfb11e5d199b08e5f233e8d
+localization\MicroCrypt-RU\go.mod: 92eea49aa3b4dd28b3e18073134968a4275a8355
+localization\MicroCrypt-RU\go.sum: ea47334d1e75355b7bb63b3203268b861ef914da
 
 --- ROOT HASH (RIPEMD-160) ---
-bce515cce33a91ce6f72f2d4c0586937927724c3
+1611b259a47c6a9d36426c15e0b048b1818a251f

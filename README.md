@@ -76,7 +76,10 @@ Special thanks go to [Maria Sophia](https://newsgrouper.org/comp.mobile.android/
 
 A big thank you also goes to the following people who localized MicroCrypt:  
 
-[Uncle Lem](https://nymcheckby.unclelem.uk/) – Russian edition  
+| Name | Language |
+| :--- | :--- |
+| [Uncle Lem](https://nymcheckby.unclelem.uk/) | Russian] |
+| [Gabx](https://virebent.art/) | Italian |
 
 ![MicroCrypt](img/1.png)
 ![MicroCrypt](img/2.png)
