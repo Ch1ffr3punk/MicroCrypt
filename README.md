@@ -78,7 +78,7 @@ A big thank you also goes to the following people who localized MicroCrypt:
 
 | Name | Language |
 | :--- | :--- |
-| [Uncle Lem](https://nymcheckby.unclelem.uk/) | Russian] |
+| [Uncle Lem](https://nymcheckby.unclelem.uk/) | Russian |
 | [Gabx](https://virebent.art/) | Italian |
 
 ![MicroCrypt](img/1.png)
